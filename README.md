@@ -25,10 +25,10 @@
 
 ### Usage
 
-* Run `npm start` to start the app in a production environment.
-* Run `npm dev` to start the app in a development environment.
-* Run `npm test` to run test suites.
-* Run `npm coverage` to check test code coverage.
+* Run `npm run start` to start the app in a production environment.
+* Run `npm run dev` to start the app in a development environment.
+* Run `npm run test` to run test suites.
+* Run `npm run coverage` to check test code coverage.
 
 * The live website can be accessed: [HERE]()
 

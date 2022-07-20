@@ -7,7 +7,7 @@
     "test": "test",
     "coverage": "npm run test -- --coverage",
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
