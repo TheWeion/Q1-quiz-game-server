@@ -2,7 +2,7 @@
 
 const PORT = process.env.PORT || 8000;
 const INDEX = '/index.html';
-const io = socketIO(server); // integrate our http server with a new instance of socket.io
+const io = require("socket.io")(server); // integrate our http server with a new instance of socket.io
 const gameLogic = require("./game-logic");
 
 const server = express()
