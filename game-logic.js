@@ -9,6 +9,7 @@ const initaliseGame = (sIo, socket) => {
 
 	gamesInSession.push(gameSocket);
 
+	gameSocket.on('pingTest', pingTest);
 	gameSocket.on('disconnect', onDisconnect);
 	gameSocket.on('createNewGame', createNewGame);
 	gameSocket.on('playerJoinsGame', playerJoinsGame);
@@ -17,6 +18,9 @@ const initaliseGame = (sIo, socket) => {
 	gameSocket.on('userEvent', userEvent);
 }
 
+const pingTest = () => {
+	this.emit('message', "Hi!");
+};
 
 const onDisconnect = () => {
 	let i = gamesInSession.indexOf(gameSocket);
