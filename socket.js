@@ -1,12 +1,11 @@
-const express = require("express")
-const serverIO = require("http").createServer(server);
+const express = require("express");
+const app = express();
+const server = require("http").createServer(app);
+const io = require("socket.io")(server) // integrate our http server with a new instance of socket.io
 const cors = require("cors");
-const io = require("socket.io")(serverIO); // integrate our http server with a new instance of socket.io
 const gameLogic = require("./game-logic");
 
 // socket connection will go here
-
-const app = express();
 
 app.use(cors('*'));
 app.use(express.json());
