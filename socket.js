@@ -15,7 +15,9 @@ app.get("/", (req, res) => {
 
 });
 
-io.on("pingTest", this.emit('message', "Hi!"););
+io.on("pingTest", ()=>{
+	this.emit('message', "Hi!");
+});
 
 io.on("connection", client => {
   gameLogic.initaliseGame(io, client);
