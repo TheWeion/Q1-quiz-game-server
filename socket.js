@@ -7,7 +7,8 @@ const gameLogic = require("./game-logic");
 
 // socket connection will go here
 
-app.use(cors('*'));
+//app.use(cors('*'));
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
