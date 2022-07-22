@@ -1,67 +1,116 @@
-let io;
-let gameSocket;
+let dataObject = require('./DataObject.js');
+let curIo;
+let curSocket;
 
-let gamesInSession = [];
+let dataArray = [];
 
-const initaliseGame = (sIo, socket) => {
-	io = sIo;
-	gameSocket = socket;
+const handleRoom = (io, socket) => {
+	curIo = io;
+	curSocket = socket;
 
-	gamesInSession.push(gameSocket);
-
-	gameSocket.on('disconnect', onDisconnect);
-	gameSocket.on('createNewGame', createNewGame);
-	gameSocket.on('playerJoinsGame', playerJoinsGame);
-	gameSocket.on('requestUserName', requestUserName);
-	gameSocket.on('recievedUserName', recievedUserName);
-	gameSocket.on('userEvent', userEvent);
+	curSocket.on('joinRoom', joinRoom);
+	curSocket.on('getPlayers', getPlayers);
+	curSocket.on('updatePlayer', updatePlayer);
+	curSocket.on('playerReady', playerReady);
+	curSocket.on('getQuestions', getQuestions);
+	curSocket.on('updateQuestions', updateQuestions);
 }
 
-const onDisconnect = () => {
-	let i = gamesInSession.indexOf(gameSocket);
-	gamesInSession.splice(i, 1);
-};
-
-const createNewGame = () => {
-	this.emit('createNewGame', {gameId: gameId, mySocketId: this.id});
-	this.join(gameId);
-};
-
-const playerJoinsGame = (idData) => {
-	let sock = this
-	let room = io.sockets.adapter.rooms[idData.gameId]
-
+const joinRoom = (data) => {
+	let id = data.roomId;
+	let roomId = getRoomIdInternal(id);
+	let rooms = curIo.sockets.adapter.rooms;
+	let room = rooms.get(roomId);
+	let posId = getRoomSize(roomId);
 	if (room === undefined) {
-		this.emit('status', "This game session does not exist!");
-		return;
-	};
-
-	if (room.length < 4) {
-		idData.mySocketID = sock.id;
-
-		sock.join(idData.gameId);
-
-		if (room.length === 4) {
-			io.sockets.in(idData.gameId).emit('playerJoinedRoom', idData);
-		};
+		curSocket.join(roomId);	
+		let afterJoin = getRoomSize(roomId);
+		let newRoom = resetRoomInternal(id);
+		newRoom.players[posId].name = data.name;
+		updateRoomInternal(id, newRoom);
+		curSocket.emit('yourId', {yourId: posId});
+		curIo.to(getRoomIdInternal(data.roomId)).emit('joinRoom', {status: "OK", msg: afterJoin + " player(s) in room. Waiting " + (4 - afterJoin) + " player(s) to join."});
 	} else {
-		this.emit('status', "This game session is full!");
-	};
+		if (getRoomSize(roomId) < 4) {
+			curSocket.join(roomId);
+			let afterJoin = getRoomSize(roomId);
+			let curRoom = getRoomInternal(id);
+			curRoom.players[posId].name = data.name;
+			updateRoomInternal(id, curRoom);
+			curSocket.emit('yourId', {yourId: posId});
+			curIo.to(getRoomIdInternal(data.roomId)).emit('joinRoom', {status: "OK", msg: afterJoin + " player(s) in room. Waiting " + (4 - afterJoin) + " player(s) to join."});
+		} else {
+			curSocket.emit('joinRoom', {msg: "This room is full!"});
+		}
+	}
 };
 
-const requestUserName = (gameId) => {
-	io.to(gameId).emit('setUsername', this.id);
+const getPlayers = (data) => {
+	curIo.to(getRoomIdInternal(data.roomId)).emit('getPlayers', {status: "OK", msg: "getPlayers OK", data: getRoomInternal(data.roomId).players});
 };
 
-const recievedUserName = (data) => {
-	data.socketId = this.id;
-	io.to(data.gameId).emit('getUserName', this.id);
+const updatePlayer = (data) => {
+	updatePlayerInternal(data.roomId, data.playerId, data.player);
+	curIo.to(getRoomIdInternal(data.roomId)).emit('updatePlayer', {status: "OK", msg: "updatePlayer OK", data: getRoomInternal(data.roomId).players});
 };
 
-const userEvent = (e) => {
-	const gameId = e.gameId;
-
-	io.to(gameId).emit('userEvent', e);
+const playerReady = (data) => {
+	let player = playerReadyInternal(data.roomId, data.playerId);
+	console.log('Room: ' + data.roomId + ' ID: ' + player.id + ' Player: ' + player.name + ' is ready.');
+	curIo.to(getRoomIdInternal(data.roomId)).emit('playerReady', {status: "OK", msg: "Player " + player.name + " is ready!"});
 };
 
-exports.initaliseGame = initaliseGame;
+const getQuestions = (data) => {
+	curIo.to(getRoomIdInternal(data.roomId)).emit('getQuestions', {status: "OK", msg: "getQuestions OK", data: getRoomInternal(data.roomId).questions});
+}
+
+const updateQuestions = (data) => {
+	updateQuestionsInternal(data.roomId, data.questions);
+	curIo.to(getRoomIdInternal(data.roomId)).emit('updateQuestions', {status: "OK", msg: "updateQuestions OK"});
+};
+
+/****** INTERNAL FUNCTION ******/
+
+const getRoomIdInternal = (id) => {
+	return 'room-' + id;
+};
+
+const resetRoomInternal = (roomId) => {
+	let newRoom = dataObject;
+	dataArray[roomId] = newRoom;
+	return newRoom;
+};
+
+const getRoomInternal = (roomId) => {
+	let room = dataArray[roomId];
+	return room;
+};
+
+const updateRoomInternal = (roomId, room) => {
+	dataArray[roomId] = room;
+};
+
+const updatePlayerInternal = (roomId, playerId, player) => {
+	dataArray[roomId].players[playerId] = player;
+};
+
+const playerReadyInternal = (roomId, playerId) => {
+	dataArray[roomId].players[playerId].is_ready = true;
+	return dataArray[roomId].players[playerId];
+};
+
+const updateQuestionsInternal = (roomId, questions) => {
+	dataArray[roomId].questions = questions;
+};
+
+const getRoomSize = (roomId) => {
+	let size = 0;
+	try {
+		let rooms = curIo.sockets.adapter.rooms;
+		let room = rooms.get(roomId);
+		size = room.size;
+	} catch(err) {}
+	return size;
+};
+
+exports.handleRoom = handleRoom;
