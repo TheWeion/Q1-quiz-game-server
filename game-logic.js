@@ -3,6 +3,8 @@ let curIo;
 let curSocket;
 
 let dataArray = [];
+let MAX_PLAYERS_PER_ROOM = 2;
+//let MAX_PLAYERS_PER_ROOM = 4;
 
 const handleRoom = (io, socket) => {
 	curIo = io;
@@ -29,16 +31,16 @@ const joinRoom = (data) => {
 		newRoom.players[posId].name = data.name;
 		updateRoomInternal(id, newRoom);
 		curSocket.emit('yourId', {yourId: posId});
-		curIo.to(getRoomIdInternal(data.roomId)).emit('joinRoom', {status: "OK", msg: afterJoin + " player(s) in room. Waiting " + (4 - afterJoin) + " player(s) to join."});
+		curIo.to(getRoomIdInternal(data.roomId)).emit('joinRoom', {status: "OK", msg: afterJoin + " player(s) in room. Waiting " + (MAX_PLAYERS_PER_ROOM - afterJoin) + " player(s) to join."});
 	} else {
-		if (getRoomSize(roomId) < 4) {
+		if (getRoomSize(roomId) < MAX_PLAYERS_PER_ROOM) {
 			curSocket.join(roomId);
 			let afterJoin = getRoomSize(roomId);
 			let curRoom = getRoomInternal(id);
 			curRoom.players[posId].name = data.name;
 			updateRoomInternal(id, curRoom);
 			curSocket.emit('yourId', {yourId: posId});
-			curIo.to(getRoomIdInternal(data.roomId)).emit('joinRoom', {status: "OK", msg: afterJoin + " player(s) in room. Waiting " + (4 - afterJoin) + " player(s) to join."});
+			curIo.to(getRoomIdInternal(data.roomId)).emit('joinRoom', {status: "OK", msg: afterJoin + " player(s) in room. Waiting " + (MAX_PLAYERS_PER_ROOM - afterJoin) + " player(s) to join."});
 		} else {
 			curSocket.emit('joinRoom', {msg: "This room is full!"});
 		}

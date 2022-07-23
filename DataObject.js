@@ -22,7 +22,7 @@ module.exports =
         "pit_entered": false,
         "finish": false,
         "is_ready": false
-    },
+    }/*,
     {
         "id": 2,
         "name": "Player 3",
@@ -44,7 +44,7 @@ module.exports =
         "pit_entered": false,
         "finish": false,
         "is_ready": false
-    }],
+    }*/],
     "questions":
     []
 };
