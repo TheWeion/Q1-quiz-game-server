@@ -4,7 +4,7 @@ const server = require("http").createServer(app);
 const io = require("socket.io")(server,{
   cors: {
       //origin: "http://localhost:3000",
-      origin: "https://q1-fp.netlify.app"
+      origin: "https://q1-server.herokuapp.com"
   }
 }); // integrate our http server with a new instance of socket.io
 
