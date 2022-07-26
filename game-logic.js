@@ -4,6 +4,8 @@ let curSocket;
 
 let dataArray = [];
 let socketArray = [];
+socketArray[0] = [];
+socketArray[1] = [];
 socketArray[2] = [];
 socketArray[3] = [];
 socketArray[4] = [];
@@ -12,6 +14,8 @@ const handleRoom = (io, socket) => {
 	curIo = io;
 	curSocket = socket;
 
+	//curSocket.on('roomSize', roomSize);
+	curSocket.on('resetRoom', resetRoom);
 	curSocket.on('joinRoom', joinRoom);
 	curSocket.on('getPlayers', getPlayers);
 	curSocket.on('updatePlayer', updatePlayer);
@@ -19,6 +23,22 @@ const handleRoom = (io, socket) => {
 	curSocket.on('getQuestions', getQuestions);
 	curSocket.on('updateQuestions', updateQuestions);
 }
+
+/*const roomSize = (data) => {
+	let id = data.roomId;
+	let roomSize = getRoomSize(id);
+	console.log('Room: ' + id + ' size: ' + roomSize);
+	curSocket.emit('roomSize', {status: "OK", data: roomSize});
+};*/
+
+const resetRoom = (data) => {
+	let id = data.roomId;
+	kickPlayerInRoomInternal(id);
+	createRoomInternal(id);
+	let msg = 'Room: ' + id + ' reset.';
+	console.log(msg);
+	curSocket.emit('resetRoom', {status: "OK", msg: msg});
+};
 
 const joinRoom = (data) => {
 	let id = data.roomId;
@@ -28,18 +48,13 @@ const joinRoom = (data) => {
 	let posId = getRoomSize(id);
 	if (getRoomSize(id) < numberOfPlayer) {
 		curSocket.join(roomId);
-		if (posId === 0) {
-			socketArray[id] = [];
-			kickPlayerInRoomInternal(id);
-			createRoomInternal(id);
-		}
 		socketArray[id].push(curSocket);
 		let afterJoin = getRoomSize(id);
 		let curRoom = getRoomInternal(id);
 		curRoom.players[posId].name = playerName;
 		updateRoomInternal(id, curRoom);
-		console.log(`Room: ${id} player: ${playerName} join, player ID is: ${posId}`);
-		curSocket.emit('yourId', {yourId: posId});
+		console.log(`Room: ${id} player: ${playerName} joined, player ID is: ${posId}`);
+		curSocket.emit('yourId', {status: "OK", yourId: posId, name: playerName, roomId: id});
 		curIo.to(getRoomIdForSocket(data.roomId)).emit('joinRoom', {status: "OK", msg: afterJoin + " player(s) in room. Waiting " + (numberOfPlayer - afterJoin) + " player(s) to join."});
 	} else {
 		console.log('Room: ' + id + ' is full.');
@@ -83,6 +98,7 @@ const kickPlayerInRoomInternal = (roomId) => {
 		let curSocket = socketArray[roomId][ind];
 		curSocket.leave(getRoomIdForSocket(roomId));
 	}
+	socketArray[roomId] = [];
 	console.log('Room: ' + roomId + ' kicked: ' + numberOfPlayer + ' player(s).');
 };
 
